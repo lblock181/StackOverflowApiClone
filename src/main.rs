@@ -4,6 +4,7 @@ extern crate rocket;
 mod cors;
 mod handlers;
 mod models;
+mod utils;
 
 use cors::*;
 use handlers::*;

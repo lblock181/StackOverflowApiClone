@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -19,9 +21,15 @@ pub struct QuestionId {
     pub question_uuid: String,
 }
 
+impl Display for QuestionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.question_uuid)
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Answer {
-    pub question_uuid: String,
+    pub answer_uuid: String,
     pub content: String,
 }
 
@@ -36,4 +44,10 @@ pub struct AnswerDetail {
 #[derive(Serialize, Deserialize)]
 pub struct AnswerId {
     pub answer_uuid: String,
+}
+
+impl Display for AnswerId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.answer_uuid)
+    }
 }

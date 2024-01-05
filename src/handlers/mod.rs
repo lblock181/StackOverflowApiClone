@@ -1,30 +1,53 @@
 use rocket::{serde::json::Json};
 
+use crate::utils::generate_datetime_str;
 use crate::models::*;
 
 // ---- CRUD for Questions ----
 
 #[post("/question", data = "<question>")]
-pub async fn create_question(
-    question: Json<Question>,
-) -> Json<QuestionDetail> {
+pub async fn create_question(question: Json<Question>,) -> Json<QuestionDetail> {
     // request has title and descr
     // return question_uuid, title, description, created_at (serialize question detail)
-    todo!()
+    let question = Json::into_inner(question);
+    let q_uuid: String = 1.to_string();
+    Json(QuestionDetail{
+        question_uuid: q_uuid,
+        title: question.title,
+        description: question.description,
+        created_at: generate_datetime_str(),
+    })
 }
 
 #[get("/questions")]
 pub async fn read_questions() -> Json<Vec<QuestionDetail>> {
     // req -> no body
     // serialize all questionDetails into vec
-    todo!()
+    Json(
+        vec![
+            QuestionDetail {
+                question_uuid: "1".to_owned(),
+                title: "dummytile".to_owned(),
+                description: "descriptions".to_owned(),
+                created_at: generate_datetime_str(),
+            },
+            QuestionDetail {
+                question_uuid: "2".to_owned(),
+                title: "dummytile2".to_owned(),
+                description: "descriptions2".to_owned(),
+                created_at: generate_datetime_str(),
+            }
+        ]
+    )
 }
 
 #[delete("/question", data = "<question_uuid>")]
 pub async fn delete_question(question_uuid: Json<QuestionId>) {
     // req -> question_uuid
     // response -> no body but 200 resp code
-    todo!()
+    let question_uuid = Json::into_inner(question_uuid);
+    println!("Deleting question {}", question_uuid);
+    // empty fn for now until db connection setup
 }
 
 // ---- CRUD for Answers ----
@@ -33,29 +56,40 @@ pub async fn delete_question(question_uuid: Json<QuestionId>) {
 pub async fn create_answer(
     answer: Json<Answer>,
 ) -> Json<AnswerDetail> {
-    todo!()
+    let answer = Json::into_inner(answer);
+    Json(
+        AnswerDetail{
+            answer_uuid: answer.answer_uuid,
+            question_uuid: "1".to_owned(),
+            content: answer.content,
+            created_at: generate_datetime_str(),
+        }
+    )
 }
 
 #[get("/answers")]
 pub async fn read_answers() -> Json<Vec<AnswerDetail>> {
-    todo!()
+    Json(
+        vec![
+            AnswerDetail {
+                answer_uuid: "a".to_owned(),
+                question_uuid: "12".to_owned(),
+                content: "this is content for a".to_owned(),
+                created_at: generate_datetime_str(),
+            },
+            AnswerDetail {
+                answer_uuid: "b".to_owned(),
+                question_uuid: "1".to_owned(),
+                content: "this is content for b".to_owned(),
+                created_at: generate_datetime_str(),
+            }
+        ]
+    )
 }
 
 #[delete("/answer", data = "<answer_uuid>")]
 pub async fn delete_answer(answer_uuid: Json<AnswerId>) {
-    todo!()
+    let answer_id = Json::into_inner(answer_uuid);
+    println!("Deleting answer {}", answer_id);
+    // left empty as no db to clear. Emtpy fn will return 200 response
 }
-// TODO: Create a POST route to /answer which accepts an `Answer` and returns `AnswerDetail` as JSON.
-//       The handler function should be called `create_answer`.
-//       
-//       hint: this function should look very similar to the create_question function above
-
-// TODO: Create a GET route to /answers which accepts an `QuestionId` and returns a vector of `AnswerDetail` as JSON.
-//       The handler function should be called `read_answers`.
-//       
-//       hint: this function should look very similar to the read_questions function above
-
-// TODO: Create a DELETE route to /answer which accepts an `AnswerId` and does not return anything.
-//       The handler function should be called `delete_answer`.
-//       
-//       hint: this function should look very similar to the delete_question function above
