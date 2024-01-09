@@ -1,4 +1,4 @@
--- Add migration script here
+-- Add up migration script here
 
 CREATE TABLE IF NOT EXISTS questions (
     question_uuid uuid PRIMARY KEY DEFAULT gen_random_uuid(),
