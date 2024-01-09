@@ -10,3 +10,4 @@ chrono = "0.4.31"
 rocket = {version="0.5.0", features = ["json"]}
 serde = {version = "1.0.194", features = ["derive"]}
 tokio = {version = "1.35.1", features = ["full"]}
+uuid = {version = "1.6.1", features = ["fast-rng", "v4"]}

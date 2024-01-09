@@ -1,6 +1,6 @@
 use rocket::{serde::json::Json};
 
-use crate::utils::generate_datetime_str;
+use crate::utils::{generate_datetime_string, generate_uuid_string};
 use crate::models::*;
 
 // ---- CRUD for Questions ----
@@ -10,12 +10,12 @@ pub async fn create_question(question: Json<Question>,) -> Json<QuestionDetail> 
     // request has title and descr
     // return question_uuid, title, description, created_at (serialize question detail)
     let question = Json::into_inner(question);
-    let q_uuid: String = 1.to_string();
+    let q_uuid: String = generate_uuid_string();
     Json(QuestionDetail{
         question_uuid: q_uuid,
         title: question.title,
         description: question.description,
-        created_at: generate_datetime_str(),
+        created_at: generate_datetime_string(),
     })
 }
 
@@ -26,16 +26,16 @@ pub async fn read_questions() -> Json<Vec<QuestionDetail>> {
     Json(
         vec![
             QuestionDetail {
-                question_uuid: "1".to_owned(),
+                question_uuid: generate_uuid_string(),
                 title: "dummytile".to_owned(),
                 description: "descriptions".to_owned(),
-                created_at: generate_datetime_str(),
+                created_at: generate_datetime_string(),
             },
             QuestionDetail {
-                question_uuid: "2".to_owned(),
+                question_uuid: generate_uuid_string(),
                 title: "dummytile2".to_owned(),
                 description: "descriptions2".to_owned(),
-                created_at: generate_datetime_str(),
+                created_at: generate_datetime_string(),
             }
         ]
     )
@@ -56,13 +56,14 @@ pub async fn delete_question(question_uuid: Json<QuestionId>) {
 pub async fn create_answer(
     answer: Json<Answer>,
 ) -> Json<AnswerDetail> {
+    // probably need to get the questionId
     let answer = Json::into_inner(answer);
     Json(
         AnswerDetail{
             answer_uuid: answer.answer_uuid,
-            question_uuid: "1".to_owned(),
+            question_uuid: generate_uuid_string(),
             content: answer.content,
-            created_at: generate_datetime_str(),
+            created_at: generate_datetime_string(),
         }
     )
 }
@@ -75,13 +76,13 @@ pub async fn read_answers() -> Json<Vec<AnswerDetail>> {
                 answer_uuid: "a".to_owned(),
                 question_uuid: "12".to_owned(),
                 content: "this is content for a".to_owned(),
-                created_at: generate_datetime_str(),
+                created_at: generate_datetime_string(),
             },
             AnswerDetail {
                 answer_uuid: "b".to_owned(),
                 question_uuid: "1".to_owned(),
                 content: "this is content for b".to_owned(),
-                created_at: generate_datetime_str(),
+                created_at: generate_datetime_string(),
             }
         ]
     )
