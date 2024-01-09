@@ -8,13 +8,11 @@ mod cors;
 mod handlers;
 mod models;
 mod utils;
-// mod db;
+mod persistance;
 
 use std::env;
 use cors::*;
 use handlers::*;
-// use log::{info, warn, error, debug};
-use log::info;
 use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 
@@ -28,14 +26,6 @@ async fn rocket() -> _ {
         .connect(&env::var("DATABASE_URL").expect("Env var is not set"))
         .await
         .expect("Failed to connect to db");
-
-    let question_res = sqlx::query!("select * from questions")
-        .fetch_all(&pg_pool)
-        .await
-        .unwrap();
-
-    info!("*********************Questions in db*********************");
-    info!("{:?}", question_res);
 
     rocket::build()
         .mount(

@@ -56,12 +56,11 @@ pub async fn delete_question(question_uuid: Json<QuestionId>) {
 pub async fn create_answer(
     answer: Json<Answer>,
 ) -> Json<AnswerDetail> {
-    // probably need to get the questionId
     let answer = Json::into_inner(answer);
     Json(
         AnswerDetail{
-            answer_uuid: answer.answer_uuid,
-            question_uuid: generate_uuid_string(),
+            question_uuid: answer.question_uuid,
+            answer_uuid: generate_uuid_string(),
             content: answer.content,
             created_at: generate_datetime_string(),
         }
