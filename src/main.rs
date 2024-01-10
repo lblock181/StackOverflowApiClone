@@ -7,7 +7,6 @@ extern crate log;
 mod cors;
 mod handlers;
 mod models;
-mod utils;
 mod persistance;
 
 use std::env;

@@ -46,7 +46,7 @@ impl QuestionsDao for QuestionsDaoImpl {
 
     async fn delete_question(&self, question_uuid: String) -> Result<(), DBError> {
         let uuid = sqlx::types::Uuid::parse_str(&question_uuid)
-        .map_err(|_| return DBError::InvalidUUID(question_uuid))?;
+        .map_err(|_| return DBError::InvalidUUID(format!("Invalid UUID: {}", question_uuid)))?;
 
         sqlx::query!(
             "delete from questions where question_uuid = $1", uuid

@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use log::Record;
 use sqlx::PgPool;
 
 use crate::models::{postgres_error_codes, Answer, AnswerDetail, DBError};
@@ -27,7 +26,7 @@ impl AnswersDaoImpl {
 impl AnswersDao for AnswersDaoImpl {
     async fn create_answer(&self, answer: Answer) -> Result<AnswerDetail, DBError> {
         let uuid = sqlx::types::Uuid::parse_str(&answer.question_uuid)
-            .map_err(|_| return DBError::InvalidUUID(answer.question_uuid))?;
+            .map_err(|_| return DBError::InvalidUUID(format!("Invalid UUID: {}", answer.question_uuid)))?;
 
         let record = sqlx::query!(
             "insert into answers (question_uuid, content)
@@ -38,7 +37,19 @@ impl AnswersDao for AnswersDaoImpl {
         )
         .fetch_one(&self.db)
         .await
-        .map_err(|_| return DBError::InvalidUUID(uuid.to_string()))?;
+        .map_err(|e: sqlx::Error | match e {
+            sqlx::Error::Database(e) => {
+                if let Some(code) = e.code() {
+                    if code.eq(postgres_error_codes::FOREIGN_KEY_VIOLATION) {
+                        return DBError::InvalidUUID(
+                            format!("Invalid question UUID: {}", answer.question_uuid)
+                        );
+                    }
+                }
+                DBError::Other(Box::new(e))
+            }
+            e => DBError::Other(Box::new(e)),
+        })?;
 
         Ok(AnswerDetail {
             answer_uuid: record.answer_uuid.to_string(),
@@ -50,7 +61,7 @@ impl AnswersDao for AnswersDaoImpl {
 
     async fn delete_answer(&self, answer_uuid: String) -> Result<(), DBError> {
         let uuid = sqlx::types::Uuid::parse_str(&answer_uuid)
-            .map_err(|_| DBError::InvalidUUID(answer_uuid))?;
+            .map_err(|_| DBError::InvalidUUID(format!("Invalid UUID: {}", answer_uuid)))?;
 
         sqlx::query!(
             "delete from answers where answer_uuid = $1", uuid
@@ -64,7 +75,7 @@ impl AnswersDao for AnswersDaoImpl {
 
     async fn get_answers(&self, question_uuid: String) -> Result<Vec<AnswerDetail>, DBError> {
         let uuid = sqlx::types::Uuid::parse_str(&question_uuid)
-        .map_err(|_| return DBError::InvalidUUID(question_uuid))?;
+        .map_err(|_| return DBError::InvalidUUID(format!("Invalid UUID: {}", question_uuid)))?;
 
         let records = sqlx::query!(
             "select * from answers where question_uuid = $1", uuid

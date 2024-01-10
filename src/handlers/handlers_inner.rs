@@ -80,7 +80,7 @@ pub async fn create_answer(
             error!("DB Error: Failed to create answer: {}", err.to_string());
 
             match err {
-                DBError::InvalidUUID(s) => Err(HandlerError::BadRequest("Bad Request. Invalid UUID".to_string())),
+                DBError::InvalidUUID(s) => Err(HandlerError::BadRequest(format!("Bad request: Invalid UUID {}", s))),
                 _ => Err(HandlerError::InternalError("Internal Error: Failed to create answer".to_string())),
             }
         }

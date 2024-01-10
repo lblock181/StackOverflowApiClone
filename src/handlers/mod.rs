@@ -1,11 +1,31 @@
 use rocket::{serde::json::Json, State};
 
-use crate::persistance::answers_dao::AnswersDao;
-use crate::persistance::questions_dao::QuestionsDao;
-use crate::utils::{generate_datetime_string, generate_uuid_string};
-use crate::models::*;
+use crate::{
+    models::*,
+    persistance::{answers_dao::AnswersDao, questions_dao::QuestionsDao}
+};
 
 mod handlers_inner;
+use handlers_inner::*;
+
+// ----- Custom Error for interface between API and inner handlers -----
+
+#[derive(Responder)]
+pub enum APIError {
+    #[response(status = 400)]
+    BadRequest(String),
+    #[response(status = 500)]
+    InternalError(String),
+}
+
+impl From<HandlerError> for APIError {
+    fn from(value: HandlerError) -> Self {
+        match value {
+            HandlerError::BadRequest(s) => Self::BadRequest(s),
+            HandlerError::InternalError(s) => Self::InternalError(s),
+        }
+    }
+}
 
 // ---- CRUD for Questions ----
 
@@ -13,99 +33,72 @@ mod handlers_inner;
 pub async fn create_question(
     question: Json<Question>,
     questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>,
-) -> Json<QuestionDetail> {
-    // request has title and descr
-    // return question_uuid, title, description, created_at (serialize question detail)
-    let question = Json::into_inner(question);
-    let q_uuid: String = generate_uuid_string();
-    Json(QuestionDetail{
-        question_uuid: q_uuid,
-        title: question.title,
-        description: question.description,
-        created_at: generate_datetime_string(),
-    })
+) -> Result<Json<QuestionDetail>, APIError> {
+    let res = handlers_inner::create_question(question.0, questions_dao.inner()).await;
+
+    match res {
+    Ok(question_detail) => Ok(Json(question_detail)),
+    Err(err) => Err(err.into()),
+    }
 }
 
 #[get("/questions")]
 pub async fn read_questions(
     questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>
-) -> Json<Vec<QuestionDetail>> {
-    // req -> no body
-    // serialize all questionDetails into vec
-    
-    Json(
-        vec![
-            QuestionDetail {
-                question_uuid: generate_uuid_string(),
-                title: "dummytile".to_owned(),
-                description: "descriptions".to_owned(),
-                created_at: generate_datetime_string(),
-            },
-            QuestionDetail {
-                question_uuid: generate_uuid_string(),
-                title: "dummytile2".to_owned(),
-                description: "descriptions2".to_owned(),
-                created_at: generate_datetime_string(),
-            }
-        ]
-    )
-}
+) -> Result<Json<Vec<QuestionDetail>>, APIError> {
+    let res = handlers_inner::read_questions(questions_dao.inner()).await;
+    match res {
+    Ok(questions) => Ok(Json(questions)),
+    Err(e) => Err(e.into()),
+}}
 
 #[delete("/question", data = "<question_uuid>")]
 pub async fn delete_question(
     question_uuid: Json<QuestionId>,
     questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>
-) {
-    // req -> question_uuid
-    // response -> no body but 200 resp code
-    let question_uuid = Json::into_inner(question_uuid);
-    println!("Deleting question {}", question_uuid);
-    // empty fn for now until db connection setup
+) -> Result<(), APIError> {
+    let res = handlers_inner::delete_question(question_uuid.0, questions_dao.inner()).await;
+
+    match res {
+    Ok(_) => Ok(()),
+    Err(e) => Err(e.into()),
 }
+        
+    }
 
 // ---- CRUD for Answers ----
 
 #[post("/answer", data = "<answer>")]
 pub async fn create_answer(
     answer: Json<Answer>,
-    answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>
-) -> Json<AnswerDetail> {
-    let answer = Json::into_inner(answer);
-    Json(
-        AnswerDetail{
-            question_uuid: answer.question_uuid,
-            answer_uuid: generate_uuid_string(),
-            content: answer.content,
-            created_at: generate_datetime_string(),
-        }
-    )
+    answers_dao: &State<Box<dyn AnswersDao + Send + Sync>>
+) -> Result<Json<AnswerDetail>, APIError> {
+    let res = handlers_inner::create_answer(answer.0, answers_dao.inner()).await;
+
+    match res {
+        Ok(a) => Ok(Json(a)),
+        Err(e) => Err(e.into()),
+    }
 }
 
-#[get("/answers")]
-pub async fn read_answers(answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>) -> Json<Vec<AnswerDetail>> {
-    Json(
-        vec![
-            AnswerDetail {
-                answer_uuid: "a".to_owned(),
-                question_uuid: "12".to_owned(),
-                content: "this is content for a".to_owned(),
-                created_at: generate_datetime_string(),
-            },
-            AnswerDetail {
-                answer_uuid: "b".to_owned(),
-                question_uuid: "1".to_owned(),
-                content: "this is content for b".to_owned(),
-                created_at: generate_datetime_string(),
-            }
-        ]
-    )
+#[get("/answers", data = "<question_uuid>")]
+pub async fn read_answers(
+    question_uuid: Json<QuestionId>,
+    answers_dao: &State<Box<dyn AnswersDao + Send + Sync>>
+) -> Result<Json<Vec<AnswerDetail>>, APIError> {
+    match handlers_inner::read_answers(question_uuid.0, answers_dao.inner()).await {
+        Ok(answers) => Ok(Json(answers)),
+        Err(e) => Err(e.into()),
+    }
 }
 
 #[delete("/answer", data = "<answer_uuid>")]
 pub async fn delete_answer(
     answer_uuid: Json<AnswerId>,
-    answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>) {
-    let answer_id = Json::into_inner(answer_uuid);
-    println!("Deleting answer {}", answer_id);
-    // left empty as no db to clear. Emtpy fn will return 200 response
+    answers_dao: &State<Box<dyn AnswersDao + Send + Sync>>
+) -> Result<(), APIError> {
+    match handlers_inner::delete_answer(answer_uuid.0, answers_dao.inner()).await {
+    Ok(_) => Ok(()),
+    Err(e) => Err(e.into()),
+    }
 }
