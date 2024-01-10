@@ -1,5 +1,7 @@
-use rocket::serde::json::Json;
+use rocket::{serde::json::Json, State};
 
+use crate::persistance::answers_dao::AnswersDao;
+use crate::persistance::questions_dao::QuestionsDao;
 use crate::utils::{generate_datetime_string, generate_uuid_string};
 use crate::models::*;
 
@@ -8,7 +10,10 @@ mod handlers_inner;
 // ---- CRUD for Questions ----
 
 #[post("/question", data = "<question>")]
-pub async fn create_question(question: Json<Question>,) -> Json<QuestionDetail> {
+pub async fn create_question(
+    question: Json<Question>,
+    questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>,
+) -> Json<QuestionDetail> {
     // request has title and descr
     // return question_uuid, title, description, created_at (serialize question detail)
     let question = Json::into_inner(question);
@@ -22,9 +27,12 @@ pub async fn create_question(question: Json<Question>,) -> Json<QuestionDetail> 
 }
 
 #[get("/questions")]
-pub async fn read_questions() -> Json<Vec<QuestionDetail>> {
+pub async fn read_questions(
+    questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>
+) -> Json<Vec<QuestionDetail>> {
     // req -> no body
     // serialize all questionDetails into vec
+    
     Json(
         vec![
             QuestionDetail {
@@ -44,7 +52,10 @@ pub async fn read_questions() -> Json<Vec<QuestionDetail>> {
 }
 
 #[delete("/question", data = "<question_uuid>")]
-pub async fn delete_question(question_uuid: Json<QuestionId>) {
+pub async fn delete_question(
+    question_uuid: Json<QuestionId>,
+    questions_dao: &State<Box<dyn QuestionsDao + Send + Sync>>
+) {
     // req -> question_uuid
     // response -> no body but 200 resp code
     let question_uuid = Json::into_inner(question_uuid);
@@ -57,6 +68,7 @@ pub async fn delete_question(question_uuid: Json<QuestionId>) {
 #[post("/answer", data = "<answer>")]
 pub async fn create_answer(
     answer: Json<Answer>,
+    answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>
 ) -> Json<AnswerDetail> {
     let answer = Json::into_inner(answer);
     Json(
@@ -70,7 +82,7 @@ pub async fn create_answer(
 }
 
 #[get("/answers")]
-pub async fn read_answers() -> Json<Vec<AnswerDetail>> {
+pub async fn read_answers(answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>) -> Json<Vec<AnswerDetail>> {
     Json(
         vec![
             AnswerDetail {
@@ -90,7 +102,9 @@ pub async fn read_answers() -> Json<Vec<AnswerDetail>> {
 }
 
 #[delete("/answer", data = "<answer_uuid>")]
-pub async fn delete_answer(answer_uuid: Json<AnswerId>) {
+pub async fn delete_answer(
+    answer_uuid: Json<AnswerId>,
+    answer_dao: &State<Box<dyn AnswersDao + Send + Sync>>) {
     let answer_id = Json::into_inner(answer_uuid);
     println!("Deleting answer {}", answer_id);
     // left empty as no db to clear. Emtpy fn will return 200 response
