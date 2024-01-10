@@ -1,4 +1,4 @@
-use rocket::{serde::json::Json};
+use rocket::serde::json::Json;
 
 use crate::utils::{generate_datetime_string, generate_uuid_string};
 use crate::models::*;
